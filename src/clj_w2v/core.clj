@@ -40,4 +40,4 @@
     cnt))
 
 ;dict
-(map-indexed list (keys (build-dataset ["a" "b"  "b" "c"])))
+(map-indexed list (keys (build-dataset ["one" "two" "two" "three" "three"])))

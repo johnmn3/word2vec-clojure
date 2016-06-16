@@ -2,6 +2,8 @@
   (:require [clojure.test :refer :all]
             [clj-w2v.core :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(deftest count-words-test
+  (testing "Function count-words"
+    (is (= (sort-word-counts
+             (count-words ["a" "b" "c" "d" "d" "e"]))
+           '(["d" 2] ["a" 1] ["b" 1] ["c" 1] ["e" 1])))))
