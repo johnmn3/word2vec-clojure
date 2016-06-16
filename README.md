@@ -1,5 +1,7 @@
 # Clojure implementation of word2vec
 
+[![Build Status](https://travis-ci.org/tamamu/word2vec-clojure.svg?branch=master)](https://travis-ci.org/tamamu/word2vec-clojure)
+
 WIP
 
 ## Usage
