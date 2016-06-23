@@ -10,7 +10,6 @@
 
 (def url "http://mattmahoney.net/dc/")
 (def fname "dataset.zip")
-(def max-size 10000)
 
 (defn download
   [uri file]
@@ -27,34 +26,7 @@
   [filename]
   (.exists (io/as-file filename)))
 
-;(download "text8.zip" fname)
-
 (defn read-data
-  [filename]
-  (with-open [zs (ZipInputStream.
-                   (io/input-stream filename))]
-    (let [ze (.getNextEntry zs)]
-      (let [size (.getSize ze)]
-        (let [bytes (byte-array max-size)
-              res ""]
-          (loop [offset 0
-                 remain max-size]
-            (if (<= max-size offset)
-              (str/join [res
-                         " "
-                         (trimr (String. bytes "UTF-8"))])
-              (do
-                (if (< remain 1024)
-                  (do
-                    (.read zs bytes offset remain)
-                    (str/join [res
-                               " "
-                               (trimr (String. bytes "UTF-8"))]))
-                  (do
-                    (.read zs bytes offset 1024)
-                    (recur (+ offset 1024) (- remain 1024))))))))))))
-
-(defn read-da
   [filename]
   (with-open [zis (ZipInputStream. (io/input-stream filename))]
     (let [br (BufferedReader. (InputStreamReader. zis))
@@ -91,10 +63,6 @@
         (key (first v))
         (recur (rest v))))))
 
-(defn reverse-map-old
-  [m]
-  (apply array-map (interleave (vals m) (keys m))))
-
 (defn reverse-map
   [m]
   (into {} (map (fn [x] {(val x) (key x)}) m)))
@@ -107,12 +75,7 @@
     (println "*debug* Counted words")
     (let [dict (into {} (map-indexed array-map (keys cnt)))]
       (println "*debug* Successful building the dictionary")
-      (let [;data (loop [s words
-            ;            d (transient [])]
-            ;       (if (empty? s)
-            ;         (persistent! d)
-            ;         (recur (rest s) (conj! d (find-val dict (first s) 0)))))]
-            data (map #(find-val dict % 0) words)]
+      (let [data (map #(find-val dict % 0) words)]
         (println "*debug* Complete covert text to vector")
         (let [r-dict (reverse-map dict)]
           {:data data :cnt cnt :dict dict :r-dict r-dict})))))
@@ -127,7 +90,7 @@
         (System/exit -1)
         (println "The download is completed."))))
   (println "Begin to build the data set.")
-  (let [words (split-words (trim (read-da fname)))]
+  (let [words (split-words (trim (read-data fname)))]
     (println "Data size" (count words))
     (let [dataset (build-dataset words)]
       (println "Most common words (+UNK)" (take 5 (:cnt dataset)))
