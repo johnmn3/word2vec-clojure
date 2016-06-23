@@ -99,12 +99,3 @@
                (map (fn [x] (get (:dict dataset) x))
                     (take 10 (:data dataset)))))))
 
-;dict
-;(def an (build-dataset ["one" "two" "two" "three" "three"]))
-
-
-;(print (read-file "/home/tamamu/text8.zip"))
-;(def x (trim (apply str (read-data "/home/tamamu/text8.zip"))))
-;(def w (split-words x))
-;(def ds (build-dataset w))
-;(= (get (:dict ds) (first (:data ds))) (first w))
