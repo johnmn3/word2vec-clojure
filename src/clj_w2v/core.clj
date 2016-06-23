@@ -4,7 +4,7 @@
     (java.util.zip ZipInputStream ZipEntry))
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            )
+            [clojure.core.reducers :as r])
   (:use [clojure.string]))
 
 
@@ -14,9 +14,18 @@
 
 (defn download
   [uri file]
-  (with-open [in (io/input-stream (str/join [url uri]))
-              out (io/output-stream file)]
-    (io/copy in out)))
+  (try
+    (with-open [in (io/input-stream (str/join [url uri]))
+                out (io/output-stream file)]
+    (io/copy in out))
+    (catch Exception _
+      (do
+        (println "Can't connect the server.")
+        nil))))
+
+(defn file-exists?
+  [filename]
+  (.exists (io/as-file filename)))
 
 ;(download "text8.zip" fname)
 
@@ -63,9 +72,9 @@
           {}
           words))
 
-(defn comp-word-counts
+(definline comp-word-counts
   [c1 c2]
-  (if (> (val c1) (val c2))
+  `(if (> (val ~c1) (val ~c2))
     true
     false))
 
@@ -82,26 +91,42 @@
         (key (first v))
         (recur (rest v))))))
 
-(defn reverse-map
+(defn reverse-map-old
   [m]
   (apply array-map (interleave (vals m) (keys m))))
+
+(defn reverse-map
+  [m]
+  (into {} (map (fn [x] {(val x) (key x)}) m)))
+
 
 (defn build-dataset
   [words]
   (let [cnt (concat {"UNK" -1}
                     (sort-word-counts (count-words words)))]
+    (println "*debug* Counted words")
     (let [dict (into {} (map-indexed array-map (keys cnt)))]
-      (let [data (loop [s words
-                        d (transient [])]
-                   (if (empty? s)
-                     (persistent! d)
-                     (recur (rest s) (conj! d (find-val dict (first s) 0)))))
-            r-dict (reverse-map dict)]
-        {:data data :cnt cnt :dict dict :r-dict r-dict}))))
-
+      (println "*debug* Successful building the dictionary")
+      (let [;data (loop [s words
+            ;            d (transient [])]
+            ;       (if (empty? s)
+            ;         (persistent! d)
+            ;         (recur (rest s) (conj! d (find-val dict (first s) 0)))))]
+            data (map #(find-val dict % 0) words)]
+        (println "*debug* Complete covert text to vector")
+        (let [r-dict (reverse-map dict)]
+          {:data data :cnt cnt :dict dict :r-dict r-dict})))))
 
 (defn -main
   []
+  (if-not (file-exists? fname)
+    (do
+      (println "Dataset is not found.")
+      (println "Download it now...")
+      (if (nil? (download "text8.zip" fname))
+        (System/exit -1)
+        (println "The download is completed."))))
+  (println "Begin to build the data set.")
   (let [words (split-words (trim (read-da fname)))]
     (println "Data size" (count words))
     (let [dataset (build-dataset words)]
