@@ -4,6 +4,13 @@
 
 WIP
 
+- [x] Download the data.
+- [x] Build the dictionary and replace rare words with UNK token.
+- [ ] Function to generate a training batch for the skip-gram model.
+- [ ] Build and train a skip-gram model.
+- [ ] Begin training.
+- [ ] Visualize the embeddings.
+
 ## Usage
 
 WIP
