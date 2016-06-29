@@ -11,6 +11,12 @@ WIP
 - [ ] Begin training.
 - [ ] Visualize the embeddings.
 
+## Log
+
+06/29
+I try to use "neanderthal", but my PC can't build atlas-lapack.
+If I can disable CPU throttling, the build wlii be successful.
+
 ## Usage
 
 WIP

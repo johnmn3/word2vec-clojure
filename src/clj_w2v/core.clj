@@ -5,7 +5,8 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.core.reducers :as r])
-  (:use [clojure.string]))
+  (:use [clojure.string]
+        [uncomplicate.neanderthal core native]))
 
 
 (def url "http://mattmahoney.net/dc/")
@@ -79,6 +80,13 @@
         (println "*debug* Complete covert text to vector")
         (let [r-dict (reverse-map dict)]
           {:data data :cnt cnt :dict dict :r-dict r-dict})))))
+
+(def data-index 0)
+
+(defn generate-batch
+  [batch-size num-skips skip-window]
+  (assert (= (mod batch-size num-skips) 0))
+  (assert (<= num-skips (* 2 skip-window))))
 
 (defn -main
   []
