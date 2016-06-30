@@ -4,10 +4,11 @@
     (java.util.zip ZipInputStream ZipEntry))
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.core.reducers :as r])
-  (:use [clojure.string]
-        [uncomplicate.neanderthal core native]))
+            [clojure.core.reducers :as r]
+            [clojure.core.matrix :as m])
+  (:use [clojure.string]))
 
+(m/shape [[1 2] [3 4]])
 
 (def url "http://mattmahoney.net/dc/")
 (def fname "dataset.zip")
@@ -82,11 +83,19 @@
           {:data data :cnt cnt :dict dict :r-dict r-dict})))))
 
 (def data-index 0)
+(def data [1 2 3 4 5 6 7 8 ])
 
 (defn generate-batch
   [batch-size num-skips skip-window]
   (assert (= (mod batch-size num-skips) 0))
-  (assert (<= num-skips (* 2 skip-window))))
+  (assert (<= num-skips (* 2 skip-window)))
+  (let [batch (m/new-array [batch-size])
+        labels (m/new-array [batch-size, 1])
+        span (+ 1 (* 2 skip-window))
+        buffer (transient [])]
+    (dotimes [n span]
+      (conj! buffer (nth data data-index)))
+  buffer))
 
 (defn -main
   []
