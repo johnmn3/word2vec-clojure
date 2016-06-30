@@ -17,6 +17,9 @@ WIP
 I try to use "neanderthal", but my PC can't build atlas-lapack.
 If I can disable CPU throttling, the build wlii be successful.
 
+06/30
+Use core.matrix for alternative to neanderthal.
+
 ## Usage
 
 WIP
