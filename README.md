@@ -20,6 +20,11 @@ If I can disable CPU throttling, the build wlii be successful.
 06/30
 Use core.matrix for alternative to neanderthal.
 
+07/01
+I'm writing generate-batch function now.
+Almost finished but the result is strange...x-(
+Try to fix.
+
 ## Usage
 
 WIP
