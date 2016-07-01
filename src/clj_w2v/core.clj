@@ -82,20 +82,37 @@
         (let [r-dict (reverse-map dict)]
           {:data data :cnt cnt :dict dict :r-dict r-dict})))))
 
-(def data-index 0)
-(def data [1 2 3 4 5 6 7 8 ])
+(def data-index (atom 0))
+(def data (ref []))
 
 (defn generate-batch
-  [batch-size num-skips skip-window]
+  [batch-size num-skips skip-window data-length]
   (assert (= (mod batch-size num-skips) 0))
   (assert (<= num-skips (* 2 skip-window)))
-  (let [batch (m/new-array [batch-size])
-        labels (m/new-array [batch-size, 1])
-        span (+ 1 (* 2 skip-window))
+  (println "*debug* Let's make mutable array")
+  (let [batch (m/mutable (m/new-array [batch-size]))
+        labels (m/mutable (m/new-array [batch-size 1]))
+        span (inc (* 2 skip-window))
         buffer (transient [])]
+    (println "*debug* Start generate batch")
     (dotimes [n span]
-      (conj! buffer (nth data data-index)))
-  buffer))
+      (conj! buffer (nth @data @data-index))
+      (reset! data-index (mod (inc @data-index) data-length)))
+    (println "*debug* Adding target to buffer")
+    (dotimes [i (quot batch-size num-skips)]
+      (let [target (atom skip-window)
+            targets-to-avoid (atom [skip-window])]
+        (println "*debug* now i=" i)
+        (dotimes [j num-skips]
+          (while (contains? @targets-to-avoid @target)
+            (reset! target (rand-int span)))
+          (swap! targets-to-avoid conj @target)
+          (println (nth buffer @target))
+          (m/mset! batch (+ (* i num-skips) j) (nth buffer skip-window))
+          (m/mset! labels (+ (* i num-skips) j) 0 (nth buffer @target)))
+        (conj! buffer (nth @data @data-index))
+        (reset! data-index (mod (inc @data-index) data-length))))
+    {:batch batch :labels labels}))
 
 (defn -main
   []
@@ -110,9 +127,15 @@
   (let [words (split-words (trim (read-data fname)))]
     (println "Data size" (count words))
     (let [dataset (build-dataset words)]
+      (dosync (ref-set data (:data dataset)))
       (println "Most common words (+UNK)" (take 5 (:cnt dataset)))
       (println "Sample data"
                (take 10 (:data dataset))
                (map (fn [x] (get (:dict dataset) x))
-                    (take 10 (:data dataset)))))))
-
+                    (take 10 (:data dataset))))
+      (let [temp (generate-batch 8 2 1 (count words))
+            batch (ref [])
+            labels (ref [])]
+        (dosync (ref-set batch (:batch temp))
+                (ref-set labels (:labels temp)))
+        (println @batch)))))
