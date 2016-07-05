@@ -8,8 +8,6 @@
             [clojure.core.matrix :as m])
   (:use [clojure.string]))
 
-(m/shape [[1 2] [3 4]])
-
 (def url "http://mattmahoney.net/dc/")
 (def fname "dataset.zip")
 
@@ -18,11 +16,11 @@
   (try
     (with-open [in (io/input-stream (str/join [url uri]))
                 out (io/output-stream file)]
-    (io/copy in out))
-    (catch Exception _
-      (do
-        (println "Can't connect the server.")
-        nil))))
+      (io/copy in out))
+      (catch Exception _
+        (do
+          (println "Can't connect the server.")
+          nil))))
 
 (defn file-exists?
   [filename]
@@ -85,32 +83,34 @@
 (def data-index (atom 0))
 (def data (ref []))
 
+(defn dpush
+  [dq maxlen v]
+  (let [dqlen (count dq)]
+    (if (<= maxlen dqlen)
+      (conj (subvec dq (inc (- dqlen maxlen))) v)
+      (conj dq v))))
+
 (defn generate-batch
   [batch-size num-skips skip-window data-length]
   (assert (= (mod batch-size num-skips) 0))
   (assert (<= num-skips (* 2 skip-window)))
-  (println "*debug* Let's make mutable array")
   (let [batch (m/mutable (m/new-array [batch-size]))
         labels (m/mutable (m/new-array [batch-size 1]))
         span (inc (* 2 skip-window))
-        buffer (transient [])]
-    (println "*debug* Start generate batch")
+        buffer (atom [])]
     (dotimes [n span]
-      (conj! buffer (nth @data @data-index))
+      (reset! buffer (dpush @buffer span (nth @data @data-index)))
       (reset! data-index (mod (inc @data-index) data-length)))
-    (println "*debug* Adding target to buffer")
     (dotimes [i (quot batch-size num-skips)]
       (let [target (atom skip-window)
             targets-to-avoid (atom [skip-window])]
-        (println "*debug* now i=" i)
         (dotimes [j num-skips]
           (while (contains? @targets-to-avoid @target)
             (reset! target (rand-int span)))
           (swap! targets-to-avoid conj @target)
-          (println (nth buffer @target))
-          (m/mset! batch (+ (* i num-skips) j) (nth buffer skip-window))
-          (m/mset! labels (+ (* i num-skips) j) 0 (nth buffer @target)))
-        (conj! buffer (nth @data @data-index))
+          (m/mset! batch (+ (* i num-skips) j) (nth @buffer skip-window))
+          (m/mset! labels (+ (* i num-skips) j) 0 (nth @buffer @target)))
+        (reset! buffer (dpush @buffer span (nth @data @data-index)))
         (reset! data-index (mod (inc @data-index) data-length))))
     {:batch batch :labels labels}))
 
@@ -138,4 +138,6 @@
             labels (ref [])]
         (dosync (ref-set batch (:batch temp))
                 (ref-set labels (:labels temp)))
-        (println @batch)))))
+        (dotimes [i 8]
+          (println (m/mget @batch i) (get (:dict dataset) (m/mget @batch i))
+                   "->" (m/mget @labels 0 i) (get (:dict dataset) (m/mget @labels 0 i))))))))
