@@ -6,7 +6,5 @@
   :profiles {:dev {:global-vars {*warn-on-reflection* true}}}
   :jvm-opts ["-Xmx2G"]
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [net.mikera/core.matrix "0.52.2"]
-                 [incanter "1.5.7"]
-                 ]
+                 [net.mikera/core.matrix "0.52.2"]]
   :main clj-w2v.core)
